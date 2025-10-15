@@ -1,1 +1,23 @@
 node_modules
+# --- Node dependencies ---
+node_modules/
+frontend/node_modules/
+backend/node_modules/
+
+# --- Environment files ---
+.env
+
+# --- SQLite database ---
+backend/database.sqlite
+
+# --- Build output ---
+frontend/build/
+
+# --- Logs ---
+*.log
+
+# --- OS / Editor clutter ---
+.vscode/
+.DS_Store
+Thumbs.db
+desktop.ini
