@@ -1,8 +1,10 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import "./Expenses.css";
 
 function Expenses() {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     category: "",
     amount: "",
@@ -18,19 +20,26 @@ function Expenses() {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    try {
-      const response = await axios.post("http://localhost:5000/expenses", formData);
-      if (response.status === 200) {
-        setMessage("Expense added successfully!");
-        setFormData({ category: "", amount: "", date: "", notes: "" });
-      }
-    } catch (error) {
-      console.error(error);
-      setMessage("Error adding expense. Please try again.");
+  try {
+    const payload = {
+      ...formData,
+      expenseDate: formData.date,
+      clientID: 1, // static or retrieved from logged-in user later
+    };
+
+    const response = await axios.post("http://localhost:5000/api/expenses", payload);
+
+    if (response.status === 200) {
+      setMessage("Expense added successfully!");
+      setFormData({ category: "", amount: "", date: "", notes: "" });
     }
-  };
+  } catch (error) {
+    console.error(error);
+    setMessage("Error adding expense. Please try again.");
+  }
+};
 
   return (
     <div className="expenses-container">
@@ -89,6 +98,23 @@ function Expenses() {
 
         {message && <p className="status-message">{message}</p>}
       </form>
+      
+      <button 
+        onClick={() => navigate("/dashboard")}
+        className="back-btn"
+        style={{
+          marginTop: "20px",
+          padding: "10px 20px",
+          backgroundColor: "#6c757d",
+          color: "white",
+          border: "none",
+          borderRadius: "5px",
+          cursor: "pointer",
+          fontSize: "16px"
+        }}
+      >
+        Back to Dashboard
+      </button>
     </div>
   );
 }
