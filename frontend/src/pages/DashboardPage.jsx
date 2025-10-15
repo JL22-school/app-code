@@ -1,46 +1,51 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import "./Dashboard.css"; // We'll create this next
 
-function DashboardPage() {
+function Dashboard() {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    // For now, just navigate back to login
-    // Later, you can clear auth tokens or session data here
+    // App's login route is mounted at `/` so navigate there on logout
     navigate("/");
   };
 
   return (
-    <div style={styles.container}>
-      <h1>Welcome to Your Dashboard!</h1>
-      <p>You’re logged in successfully 🎉</p>
+    <div className="dashboard-container">
+      {/* Header */}
+      <header className="dashboard-header">
+        <h1>Dashboard</h1>
+        <button className="logout-button" onClick={handleLogout}>
+          Logout
+        </button>
+      </header>
 
-      <button style={styles.button} onClick={handleLogout}>
-        Logout
+      {/* Main content area */}
+      <main className="dashboard-main">
+        <h2>Welcome to Your Dashboard</h2>
+        <p>Manage your budgets and expenses easily.</p>
+
+        <div className="chart-placeholder">
+          <p>(Your charts and summaries will appear here)</p>
+        </div>
+      </main>
+
+      {/* Corner buttons */}
+      <button
+        className="corner-button left"
+        onClick={() => navigate("/expenses")}
+      >
+        ➕ Add Expense
+      </button>
+
+      <button
+        className="corner-button right"
+        onClick={() => navigate("/budgets")}
+      >
+        💰 Add Budget
       </button>
     </div>
   );
 }
 
-const styles = {
-  container: {
-    maxWidth: "600px",
-    margin: "5rem auto",
-    padding: "2rem",
-    textAlign: "center",
-    border: "1px solid #ddd",
-    borderRadius: "10px",
-    backgroundColor: "#fafafa",
-  },
-  button: {
-    marginTop: "2rem",
-    padding: "0.75rem 1.5rem",
-    border: "none",
-    backgroundColor: "#dc3545",
-    color: "white",
-    borderRadius: "5px",
-    cursor: "pointer",
-  },
-};
-
-export default DashboardPage;
+export default Dashboard;
