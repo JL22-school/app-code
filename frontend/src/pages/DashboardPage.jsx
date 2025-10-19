@@ -39,6 +39,13 @@ function Dashboard() {
       </button>
 
       <button
+        className="middle button"
+        onClick={() => navigate("/expense-list")}
+      >
+        📋 Expense List
+      </button>
+
+      <button
         className="corner-button right"
         onClick={() => navigate("/budgets")}
       >
