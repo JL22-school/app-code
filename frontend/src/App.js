@@ -3,8 +3,9 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import DashboardPage from "./pages/DashboardPage";
-import Budgets from "./pages/Budgets";
-import Expenses from "./pages/Expenses";
+import Budgets from "./pages/BudgetPage";
+import Expenses from "./pages/ExpensePage";
+import ExpenseList from "./pages/ExpenseList";
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/budgets" element={<Budgets />} />
         <Route path="/expenses" element={<Expenses />} />
+        <Route path="/expense-list" element={<ExpenseList />} />
       </Routes>
     </Router>
   );

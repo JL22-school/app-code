@@ -98,9 +98,31 @@
 
 .corner-button.right {
   right: 25px;
-  background-color: #16a34a;
+  background-color: #10b981;
 }
 
 .corner-button.right:hover {
-  background-color: #15803d;
+  background-color: #059669;
+}
+
+.middle.button {
+  position: absolute;
+  bottom: 25px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 12px 20px;
+  font-size: 1rem;
+  font-weight: 500;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  color: white;
+  background-color: #6366f1;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  transition: background-color 0.2s;
+  width: auto;
+}
+
+.middle.button:hover {
+  background-color: #4f46e5;
 }
