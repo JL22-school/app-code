@@ -6,6 +6,7 @@ import DashboardPage from "./pages/DashboardPage";
 import Budgets from "./pages/BudgetPage";
 import Expenses from "./pages/ExpensePage";
 import ExpenseList from "./pages/ExpenseList";
+import BudgetList from "./pages/BudgetList";
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
         <Route path="/budgets" element={<Budgets />} />
         <Route path="/expenses" element={<Expenses />} />
         <Route path="/expense-list" element={<ExpenseList />} />
+        <Route path="/budget-list" element={<BudgetList />} />
       </Routes>
     </Router>
   );

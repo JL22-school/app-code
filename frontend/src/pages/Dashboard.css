@@ -72,44 +72,20 @@
   font-style: italic;
 }
 
-/* Corner buttons */
-.corner-button {
-  position: absolute;
-  bottom: 25px;
-  padding: 12px 20px;
-  font-size: 1rem;
-  font-weight: 500;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  color: white;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-  transition: background-color 0.2s;
-}
-
-.corner-button.left {
-  left: 25px;
-  background-color: #2563eb;
-}
-
-.corner-button.left:hover {
-  background-color: #1e4ed8;
-}
-
-.corner-button.right {
-  right: 25px;
-  background-color: #10b981;
-}
-
-.corner-button.right:hover {
-  background-color: #059669;
-}
-
-.middle.button {
-  position: absolute;
+/* Dashboard buttons */
+.button-container {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  padding: 20px;
+  position: fixed;
   bottom: 25px;
   left: 50%;
   transform: translateX(-50%);
+  width: auto;
+}
+
+.dashboard-button {
   padding: 12px 20px;
   font-size: 1rem;
   font-weight: 500;
@@ -117,12 +93,45 @@
   border-radius: 8px;
   cursor: pointer;
   color: white;
-  background-color: #6366f1;
+  background-color: #2563eb;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-  transition: background-color 0.2s;
-  width: auto;
+  transition: all 0.2s ease;
+  min-width: 150px;
 }
 
-.middle.button:hover {
+.dashboard-button:nth-child(1) { /* Add Expense */
+  background-color: #2563eb;
+}
+
+.dashboard-button:nth-child(2) { /* Expense List */
+  background-color: #6366f1;
+}
+
+.dashboard-button:nth-child(3) { /* Add Budget */
+  background-color: #10b981;
+}
+
+.dashboard-button:nth-child(4) { /* Budget List */
+  background-color: #8b5cf6;
+}
+
+.dashboard-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.dashboard-button:nth-child(1):hover {
+  background-color: #1e4ed8;
+}
+
+.dashboard-button:nth-child(2):hover {
   background-color: #4f46e5;
+}
+
+.dashboard-button:nth-child(3):hover {
+  background-color: #059669;
+}
+
+.dashboard-button:nth-child(4):hover {
+  background-color: #7c3aed;
 }

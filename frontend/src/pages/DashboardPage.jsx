@@ -31,26 +31,35 @@ function Dashboard() {
       </main>
 
       {/* Corner buttons */}
-      <button
-        className="corner-button left"
-        onClick={() => navigate("/expenses")}
-      >
-        ➕ Add Expense
-      </button>
+      <div className="button-container">
+        <button
+          className="dashboard-button"
+          onClick={() => navigate("/expenses")}
+        >
+          ➕ Add Expense
+        </button>
 
-      <button
-        className="middle button"
-        onClick={() => navigate("/expense-list")}
-      >
-        📋 Expense List
-      </button>
+        <button
+          className="dashboard-button"
+          onClick={() => navigate("/expense-list")}
+        >
+          📋 Expense List
+        </button>
 
-      <button
-        className="corner-button right"
-        onClick={() => navigate("/budgets")}
-      >
-        💰 Add Budget
-      </button>
+        <button
+          className="dashboard-button"
+          onClick={() => navigate("/budgets")}
+        >
+          💰 Add Budget
+        </button>
+
+        <button
+          className="dashboard-button"
+          onClick={() => navigate("/budget-list")}
+        >
+          � Budget List
+        </button>
+      </div>
     </div>
   );
 }
