@@ -35,9 +35,18 @@ app.post("/api/expenses", (req, res) => {
   );
 });
 
-// Get all expenses
+// Get all expenses (optionally filter by clientID)
 app.get("/api/expenses", (req, res) => {
-  db.all(`SELECT * FROM Expenses`, [], (err, rows) => {
+  const { clientID } = req.query;
+  let query = "SELECT * FROM Expenses";
+  let params = [];
+
+  if (clientID) {
+    query += " WHERE clientID = ?";
+    params.push(clientID);
+  }
+
+  db.all(query, params, (err, rows) => {
     if (err) {
       res.status(500).json({ error: err.message });
     } else {
@@ -213,6 +222,53 @@ app.delete("/api/budgets/:id", (req, res) => {
       res.status(404).json({ message: "Budget not found" });
     } else {
       res.json({ message: "Budget deleted successfully" });
+    }
+  });
+});
+
+// ----------------- CATEGORIES ENDPOINTS -----------------
+// Get categories for a specific user
+app.get("/api/categories", (req, res) => {
+  const { clientID } = req.query;
+  
+  if (!clientID) {
+    return res.status(400).json({ error: "clientID is required" });
+  }
+
+  const query = "SELECT * FROM Categories WHERE clientID = ? ORDER BY categoryName";
+
+  db.all(query, [clientID], (err, rows) => {
+    if (err) {
+      res.status(500).json({ error: err.message });
+    } else {
+      res.json(rows);
+    }
+  });
+});
+
+// Add a new category for a user
+app.post("/api/categories", (req, res) => {
+  const { clientID, categoryName } = req.body;
+
+  if (!clientID || !categoryName) {
+    return res.status(400).json({ error: "clientID and categoryName are required" });
+  }
+
+  const query = `
+    INSERT INTO Categories (clientID, categoryName)
+    VALUES (?, ?)
+  `;
+
+  db.run(query, [clientID, categoryName], function (err) {
+    if (err) {
+      // Check if it's a unique constraint violation (category already exists)
+      if (err.message.includes("UNIQUE")) {
+        res.status(200).json({ message: "Category already exists", categoryID: null });
+      } else {
+        res.status(500).json({ error: err.message });
+      }
+    } else {
+      res.json({ categoryID: this.lastID, message: "Category added successfully" });
     }
   });
 });
