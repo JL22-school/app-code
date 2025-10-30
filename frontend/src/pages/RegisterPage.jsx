@@ -39,7 +39,9 @@ function RegisterPage() {
       setMessage("Registration successful! Redirecting to login...");
       setTimeout(() => navigate("/"), 2000); // redirect after 2 sec
     } catch (error) {
-      setMessage(error.response?.data?.error || "Registration failed");
+      // Display the error message from the server, or a generic message if none is available
+      const errorMessage = error.response?.data?.error || "Registration failed. Please try again.";
+      setMessage(errorMessage);
     }
   };
 
