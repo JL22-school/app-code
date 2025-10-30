@@ -14,7 +14,13 @@ function LoginPage() {
       const response = await axios.post("/api/login", { email, password });
       setMessage("Login successful!");
       console.log(response.data);
-      // Redirect to dashboard (you'll make this later)
+      // Store user info in localStorage
+      if (response.data.user) {
+        localStorage.setItem("userID", response.data.user.userID);
+        localStorage.setItem("userEmail", response.data.user.email);
+        localStorage.setItem("userName", `${response.data.user.firstName} ${response.data.user.lastName}`);
+      }
+      // Redirect to dashboard
       navigate("/dashboard");
     } catch (error) {
       setMessage(error.response?.data?.error || "Login failed");

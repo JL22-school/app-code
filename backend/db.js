@@ -52,6 +52,17 @@ db.run(`
   )
 `);
 
+db.run(`
+  CREATE TABLE IF NOT EXISTS Categories (
+    categoryID INTEGER PRIMARY KEY AUTOINCREMENT,
+    clientID INTEGER,
+    categoryName TEXT NOT NULL,
+    created_at TEXT DEFAULT (datetime('now')),
+    FOREIGN KEY(clientID) REFERENCES Users(userID),
+    UNIQUE(clientID, categoryName)
+  )
+`);
+
 
 
 module.exports = db;

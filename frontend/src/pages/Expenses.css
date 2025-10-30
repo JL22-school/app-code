@@ -38,7 +38,8 @@
 }
 
 .expense-form input,
-.expense-form textarea {
+.expense-form textarea,
+.expense-form select {
   margin-top: 6px;
   padding: 10px;
   border: 1px solid #ccc;

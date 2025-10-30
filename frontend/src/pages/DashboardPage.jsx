@@ -6,6 +6,10 @@ function Dashboard() {
   const navigate = useNavigate();
 
   const handleLogout = () => {
+    // Clear user data from localStorage
+    localStorage.removeItem("userID");
+    localStorage.removeItem("userEmail");
+    localStorage.removeItem("userName");
     // App's login route is mounted at `/` so navigate there on logout
     navigate("/");
   };

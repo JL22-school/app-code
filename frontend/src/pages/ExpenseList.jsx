@@ -9,7 +9,15 @@ export default function ExpenseList() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetch('http://localhost:5000/api/expenses')
+    const userID = localStorage.getItem("userID");
+    
+    if (!userID) {
+      setError("Please log in to view your expenses");
+      setLoading(false);
+      return;
+    }
+
+    fetch(`http://localhost:5000/api/expenses?clientID=${userID}`)
       .then((res) => {
         if (!res.ok) {
           throw new Error('Network response was not ok');
