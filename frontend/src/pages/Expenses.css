@@ -80,12 +80,15 @@
 .expense-list-topbar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
   margin-bottom: 16px;
+  position: relative;  /* Add this to enable absolute positioning of the button */
 }
 
 .return-button {
+  position: absolute;  /* Position the button absolutely */
+  left: 0;            /* Align to the left edge */
+  top: 50%;          /* Center vertically */
+  transform: translateY(-50%);  /* Adjust for perfect vertical centering */
   background-color: #2563eb;
   border: none;
   color: white;
@@ -101,10 +104,12 @@
 }
 
 .expense-list-header {
-  flex: 1;
+  width: 100%;
   text-align: center;
   color: #2563eb;
   margin: 0;
+  font-size: 1.75rem;
+  padding: 10px 0;
 }
 
 .expense-list {

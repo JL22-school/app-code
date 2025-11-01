@@ -65,25 +65,48 @@ app.post("/api/users", async (req, res) => {
   }
 
   try {
-    // Hash the password
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const query = `
-      INSERT INTO Users (firstName, lastName, email, password, role)
-      VALUES (?, ?, ?, ?, ?)
-    `;
-
-    db.run(
-      query,
-      [firstName, lastName, email, hashedPassword, role || "client"],
-      function (err) {
-        if (err) {
-          res.status(500).json({ error: err.message });
-        } else {
-          res.json({ userID: this.lastID });
-        }
+    // First check if email exists
+    db.get('SELECT email FROM Users WHERE email = ?', [email], async (err, row) => {
+      if (err) {
+        return res.status(500).json({ error: "Database error" });
       }
-    );
+      
+      if (row) {
+        return res.status(400).json({ error: "Email already in use" });
+      }
+
+      try {
+        // Hash the password
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        const query = `
+          INSERT INTO Users (firstName, lastName, email, password, role)
+          VALUES (?, ?, ?, ?, ?)
+        `;
+
+        db.run(
+          query,
+          [firstName, lastName, email, hashedPassword, role || "client"],
+          function (err) {
+            if (err) {
+              res.status(500).json({ error: "Error creating user" });
+            } else {
+              res.json({ userID: this.lastID });
+            }
+          }
+        );
+      } catch (error) {
+        res.status(500).json({ error: "Error processing request" });
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ error: "Error processing request" });
+  }
+});
+      } catch (hashError) {
+        res.status(500).json({ error: "Error processing request" });
+      }
+    });
   } catch (error) {
     // Return underlying error message for easier debugging
     res.status(500).json({ error: error.message || "Error hashing password" });
@@ -151,14 +174,19 @@ app.delete("/api/expenses/:id", (req, res) => {
 
 // Add a new budget
 app.post("/api/budgets", (req, res) => {
-  const { clientID, category, amount, timePeriod } = req.body;
+  const { clientID, category, amount, timePeriod, startDate, endDate } = req.body;
+
+  // Validate required fields
+  if (!clientID || !category || !amount || !timePeriod || !startDate || !endDate) {
+    return res.status(400).json({ error: "All fields are required" });
+  }
 
   const query = `
-    INSERT INTO Budgets (clientID, category, amount, timePeriod)
-    VALUES (?, ?, ?, ?)
+    INSERT INTO Budgets (clientID, category, amount, timePeriod, startDate, endDate)
+    VALUES (?, ?, ?, ?, ?, ?)
   `;
 
-  db.run(query, [clientID, category, amount, timePeriod], function (err) {
+  db.run(query, [clientID, category, amount, timePeriod, startDate, endDate], function (err) {
     if (err) {
       res.status(500).json({ error: err.message });
     } else {

@@ -47,6 +47,8 @@ db.run(`
     category TEXT NOT NULL,
     amount REAL NOT NULL,
     timePeriod TEXT NOT NULL CHECK (timePeriod IN ('weekly', 'bi-weekly', 'monthly', 'yearly')),
+    startDate TEXT NOT NULL,
+    endDate TEXT NOT NULL,
     created_at TEXT DEFAULT (datetime('now')),
     FOREIGN KEY(clientID) REFERENCES Users(userID)
   )
