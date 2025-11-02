@@ -36,6 +36,7 @@ db.run(`
     category TEXT NOT NULL,
     expenseDate TEXT DEFAULT (datetime('now')),
     notes TEXT,
+    enabled BOOLEAN DEFAULT 1,
     FOREIGN KEY(clientID) REFERENCES Users(userID)
   )
 `);
@@ -65,7 +66,14 @@ db.run(`
   )
 `);
 
-
+// Migration: Add enabled column to existing Expenses table if it doesn't exist
+db.run(`
+  ALTER TABLE Expenses ADD COLUMN enabled BOOLEAN DEFAULT 1
+`, (err) => {
+  if (err && !err.message.includes('duplicate column name')) {
+    console.error('Error adding enabled column:', err.message);
+  }
+});
 
 module.exports = db;
 

@@ -18,13 +18,13 @@ app.post("/api/expenses", (req, res) => {
   const { clientID, amount, category, expenseDate, notes } = req.body;
 
   const query = `
-    INSERT INTO Expenses (clientID, amount, category, expenseDate, notes)
-    VALUES (?, ?, ?, ?, ?)
+    INSERT INTO Expenses (clientID, amount, category, expenseDate, notes, enabled)
+    VALUES (?, ?, ?, ?, ?, ?)
   `;
 
   db.run(
     query,
-    [clientID, amount, category, expenseDate || new Date().toISOString(), notes],
+    [clientID, amount, category, expenseDate || new Date().toISOString(), notes, 1],
     function (err) {
       if (err) {
         res.status(500).json({ error: err.message });
@@ -56,61 +56,48 @@ app.get("/api/expenses", (req, res) => {
 });
 
 // Add a new user (with password hashing)
-app.post("/api/users", async (req, res) => {
+app.post("/api/users", (req, res) => {
   const { firstName, lastName, email, password, role } = req.body;
 
-  // Basic validation
   if (!email || !password) {
     return res.status(400).json({ error: "Email and password are required" });
   }
 
-  try {
-    // First check if email exists
-    db.get('SELECT email FROM Users WHERE email = ?', [email], async (err, row) => {
-      if (err) {
-        return res.status(500).json({ error: "Database error" });
+  // Check if email already exists
+  const checkQuery = "SELECT email FROM Users WHERE email = ?";
+  db.get(checkQuery, [email], (err, row) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+
+    if (row) {
+      return res.status(400).json({ error: "Email already in use" });
+    }
+
+    // Hash password
+    bcrypt.hash(password, 10, (hashErr, hashedPassword) => {
+      if (hashErr) {
+        return res.status(500).json({ error: hashErr.message });
       }
-      
-      if (row) {
-        return res.status(400).json({ error: "Email already in use" });
-      }
 
-      try {
-        // Hash the password
-        const hashedPassword = await bcrypt.hash(password, 10);
+      // Insert new user
+      const insertQuery = `
+        INSERT INTO Users (firstName, lastName, email, password, role)
+        VALUES (?, ?, ?, ?, ?)
+      `;
 
-        const query = `
-          INSERT INTO Users (firstName, lastName, email, password, role)
-          VALUES (?, ?, ?, ?, ?)
-        `;
-
-        db.run(
-          query,
-          [firstName, lastName, email, hashedPassword, role || "client"],
-          function (err) {
-            if (err) {
-              res.status(500).json({ error: "Error creating user" });
-            } else {
-              res.json({ userID: this.lastID });
-            }
+      db.run(
+        insertQuery,
+        [firstName, lastName, email, hashedPassword, role || "client"],
+        function (insertErr) {
+          if (insertErr) {
+            return res.status(500).json({ error: insertErr.message });
           }
-        );
-      } catch (error) {
-        res.status(500).json({ error: "Error processing request" });
-      }
+          res.json({ userID: this.lastID });
+        }
+      );
     });
-  } catch (error) {
-    res.status(500).json({ error: "Error processing request" });
-  }
-});
-      } catch (hashError) {
-        res.status(500).json({ error: "Error processing request" });
-      }
-    });
-  } catch (error) {
-    // Return underlying error message for easier debugging
-    res.status(500).json({ error: error.message || "Error hashing password" });
-  }
+  });
 });
 
 // Get all users
@@ -168,6 +155,37 @@ app.delete("/api/expenses/:id", (req, res) => {
       res.status(404).json({ message: "Expense not found" });
     } else {
       res.json({ message: "Expense deleted successfully" });
+    }
+  });
+});
+
+// ----------------- TOGGLE EXPENSE ENABLED STATUS -----------------
+app.patch("/api/expenses/:id/toggle", (req, res) => {
+  const { id } = req.params;
+
+  // First get the current enabled status
+  const getQuery = `SELECT enabled FROM Expenses WHERE expenseID = ?`;
+  
+  db.get(getQuery, [id], (err, row) => {
+    if (err) {
+      res.status(500).json({ error: err.message });
+    } else if (!row) {
+      res.status(404).json({ message: "Expense not found" });
+    } else {
+      // Toggle the enabled status
+      const newStatus = row.enabled ? 0 : 1;
+      const updateQuery = `UPDATE Expenses SET enabled = ? WHERE expenseID = ?`;
+      
+      db.run(updateQuery, [newStatus, id], function (err) {
+        if (err) {
+          res.status(500).json({ error: err.message });
+        } else {
+          res.json({ 
+            message: `Expense ${newStatus ? 'enabled' : 'disabled'} successfully`,
+            enabled: newStatus === 1
+          });
+        }
+      });
     }
   });
 });
