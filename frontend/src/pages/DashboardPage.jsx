@@ -38,30 +38,16 @@ function Dashboard() {
       <div className="button-container">
         <button
           className="dashboard-button"
-          onClick={() => navigate("/expenses")}
+          onClick={() => navigate("/budget-list")}
         >
-          ➕ Add Expense
+          📋 Manage Budgets
         </button>
 
         <button
           className="dashboard-button"
           onClick={() => navigate("/expense-list")}
         >
-          📋 Expense List
-        </button>
-
-        <button
-          className="dashboard-button"
-          onClick={() => navigate("/budgets")}
-        >
-          💰 Add Budget
-        </button>
-
-        <button
-          className="dashboard-button"
-          onClick={() => navigate("/budget-list")}
-        >
-          � Budget List
+          📋 Manage Expenses
         </button>
       </div>
     </div>
