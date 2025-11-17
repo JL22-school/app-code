@@ -55,6 +55,46 @@ app.get("/api/expenses", (req, res) => {
   });
 });
 
+// Get expenses for dashboard charts (supports week, month, or all time)
+app.get("/api/expenses/weekly", (req, res) => {
+  const { clientID, timePeriod } = req.query;
+  
+  console.log(`Dashboard expenses request - clientID: ${clientID}, timePeriod: ${timePeriod}`);
+  
+  if (!clientID) {
+    return res.status(400).json({ error: "clientID is required" });
+  }
+
+  let dateFilter = '';
+  
+  // Determine date filter based on time period
+  if (timePeriod === 'week') {
+    dateFilter = "AND date(expenseDate) >= date('now', '-7 days')";
+  } else if (timePeriod === 'month') {
+    dateFilter = "AND date(expenseDate) >= date('now', '-30 days')";
+  }
+  // For 'all', no date filter is applied
+
+  const query = `
+    SELECT * FROM Expenses 
+    WHERE clientID = ? 
+    AND enabled = 1
+    ${dateFilter}
+    ORDER BY expenseDate
+  `;
+
+  console.log(`Executing query: ${query.replace(/\s+/g, ' ')}`);
+
+  db.all(query, [clientID], (err, rows) => {
+    if (err) {
+      res.status(500).json({ error: err.message });
+    } else {
+      console.log(`Returned ${rows.length} expenses for timePeriod: ${timePeriod}`);
+      res.json(rows);
+    }
+  });
+});
+
 // Add a new user (with password hashing)
 app.post("/api/users", (req, res) => {
   const { firstName, lastName, email, password, role } = req.body;
