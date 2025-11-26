@@ -253,16 +253,30 @@ app.post("/api/budgets", (req, res) => {
   });
 });
 
-// Get all budgets (optionally filter by clientID)
+// Get all budgets (optionally filter by clientID and active status)
 app.get("/api/budgets", (req, res) => {
-  const { clientID } = req.query;
+  const { clientID, status } = req.query;
   let query = "SELECT * FROM Budgets";
   let params = [];
+  let conditions = [];
 
   if (clientID) {
-    query += " WHERE clientID = ?";
+    conditions.push("clientID = ?");
     params.push(clientID);
   }
+
+  // Filter by active/inactive status based on end date
+  if (status === 'active') {
+    conditions.push("date(endDate) >= date('now')");
+  } else if (status === 'inactive') {
+    conditions.push("date(endDate) < date('now')");
+  }
+
+  if (conditions.length > 0) {
+    query += " WHERE " + conditions.join(" AND ");
+  }
+
+  query += " ORDER BY endDate DESC";
 
   db.all(query, params, (err, rows) => {
     if (err) {
