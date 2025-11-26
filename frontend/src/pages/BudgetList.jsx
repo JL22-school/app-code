@@ -8,6 +8,7 @@ export default function BudgetList() {
   const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showPastBudgets, setShowPastBudgets] = useState(false);
   
   // Add budget popup state
   const [showAddBudgetPopup, setShowAddBudgetPopup] = useState(false);
@@ -25,10 +26,19 @@ export default function BudgetList() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    fetchBudgets();
+    fetchCategories();
+  }, [showPastBudgets]);
+
+  const fetchBudgets = () => {
+    setLoading(true);
+    const userID = localStorage.getItem("userID");
+    const status = showPastBudgets ? 'inactive' : 'active';
+    
     // Fetch both budgets and expenses
     Promise.all([
-      fetch('http://localhost:5000/api/budgets'),
-      fetch('http://localhost:5000/api/expenses')
+      fetch(`http://localhost:5000/api/budgets?clientID=${userID}&status=${status}`),
+      fetch(`http://localhost:5000/api/expenses?clientID=${userID}`)
     ])
       .then(async ([budgetsRes, expensesRes]) => {
         if (!budgetsRes.ok || !expensesRes.ok) {
@@ -45,9 +55,7 @@ export default function BudgetList() {
         setError(err.message);
         setLoading(false);
       });
-    
-    fetchCategories();
-  }, []);
+  };
 
   const fetchCategories = () => {
     const userID = localStorage.getItem("userID");
@@ -172,7 +180,7 @@ export default function BudgetList() {
           endDate: "",
         });
         // Refresh budgets list
-        window.location.reload(); // Simple refresh for now
+        fetchBudgets();
         setTimeout(() => {
           setShowAddBudgetPopup(false);
           setMessage("");
@@ -206,7 +214,7 @@ export default function BudgetList() {
         <button className="return-button" onClick={() => navigate('/dashboard')}>
           ← Return to Dashboard
         </button>
-        <h1 className="expense-list-header">Budget List</h1>
+        <h1 className="expense-list-header">{showPastBudgets ? 'Past Budgets' : 'Active Budgets'}</h1>
         <button 
           className="add-budget-btn"
           onClick={() => setShowAddBudgetPopup(true)}
@@ -223,6 +231,29 @@ export default function BudgetList() {
           Create New Budget
         </button>
       </div>
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        marginBottom: '20px',
+        marginTop: '10px'
+      }}>
+        <button 
+          onClick={() => setShowPastBudgets(!showPastBudgets)}
+          style={{
+            padding: "12px 24px",
+            backgroundColor: showPastBudgets ? "#28a745" : "#6c757d",
+            color: "white",
+            border: "none",
+            borderRadius: "5px",
+            cursor: "pointer",
+            fontSize: "15px",
+            fontWeight: "500",
+            transition: "background-color 0.3s"
+          }}
+        >
+          {showPastBudgets ? '← View Active Budgets' : 'View Past Budgets →'}
+        </button>
+      </div>
       <div className="expense-list">
         {budgets.map((budget) => {
           const spentAmount = calculateSpentForCategory(budget.category);
@@ -234,13 +265,41 @@ export default function BudgetList() {
             <div
               key={budget.budgetID || budget.id}
               className="expense-card"
+              style={{
+                opacity: showPastBudgets ? 0.8 : 1,
+                borderLeft: showPastBudgets ? '4px solid #dc3545' : '4px solid #28a745'
+              }}
             >
-              <div className="expense-amount">${budgetAmount.toFixed(2)}</div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div className="expense-amount">${budgetAmount.toFixed(2)}</div>
+                <span style={{
+                  fontSize: '12px',
+                  padding: '4px 8px',
+                  borderRadius: '4px',
+                  backgroundColor: showPastBudgets ? '#dc3545' : '#28a745',
+                  color: 'white',
+                  fontWeight: 'bold'
+                }}>
+                  {showPastBudgets ? 'INACTIVE' : 'ACTIVE'}
+                </span>
+              </div>
               <div className="expense-details">
                 <span className="expense-category">{budget.category}</span>
                 <span className="expense-date">
                   {budget.timePeriod}
                 </span>
+              </div>
+              
+              {/* Budget Date Range */}
+              <div style={{
+                marginTop: '8px',
+                fontSize: '13px',
+                color: '#666',
+                display: 'flex',
+                justifyContent: 'space-between'
+              }}>
+                <span>Start: {new Date(budget.startDate).toLocaleDateString()}</span>
+                <span>End: {new Date(budget.endDate).toLocaleDateString()}</span>
               </div>
               
               {/* Budget Progress Section */}

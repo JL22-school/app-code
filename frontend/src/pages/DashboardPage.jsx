@@ -27,6 +27,7 @@ ChartJS.register(
 function Dashboard() {
   const navigate = useNavigate();
   const [weeklyExpenses, setWeeklyExpenses] = useState([]);
+  const [budgets, setBudgets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [timePeriod, setTimePeriod] = useState('week');
 
@@ -35,15 +36,20 @@ function Dashboard() {
     if (userID) {
       console.log(`Fetching expenses for timePeriod: ${timePeriod}`);
       setLoading(true);
-      fetch(`http://localhost:5000/api/expenses/weekly?clientID=${userID}&timePeriod=${timePeriod}`)
-        .then((res) => res.json())
-        .then((data) => {
-          console.log(`Received ${data.length} expenses for ${timePeriod}:`, data);
-          setWeeklyExpenses(data);
+      Promise.all([
+        fetch(`http://localhost:5000/api/expenses/weekly?clientID=${userID}&timePeriod=${timePeriod}`),
+        fetch(`http://localhost:5000/api/budgets?clientID=${userID}&status=active`)
+      ])
+        .then(([expensesRes, budgetsRes]) => Promise.all([expensesRes.json(), budgetsRes.json()]))
+        .then(([expensesData, budgetsData]) => {
+          console.log(`Received ${expensesData.length} expenses for ${timePeriod}:`, expensesData);
+          console.log(`Received ${budgetsData.length} active budgets:`, budgetsData);
+          setWeeklyExpenses(expensesData);
+          setBudgets(budgetsData);
           setLoading(false);
         })
         .catch((err) => {
-          console.error("Error fetching expenses:", err);
+          console.error("Error fetching data:", err);
           setLoading(false);
         });
     }
@@ -113,38 +119,68 @@ function Dashboard() {
     };
   };
 
-  // Process data for pie chart (Expenses By Category)
+  // Process data for pie chart (Budget Categories with Spent/Remaining)
   const getPieChartData = () => {
-    const categoryTotals = {};
-    
+    if (budgets.length === 0) return { labels: [], datasets: [] };
+
+    // Calculate spent amount per category
+    const spentByCategory = {};
     weeklyExpenses.forEach(expense => {
-      const category = expense.category || 'Uncategorized';
-      categoryTotals[category] = (categoryTotals[category] || 0) + parseFloat(expense.amount);
+      const category = expense.category;
+      spentByCategory[category] = (spentByCategory[category] || 0) + parseFloat(expense.amount);
     });
 
-    const categories = Object.keys(categoryTotals);
-    const colors = [
-      'rgba(255, 99, 132, 0.7)',
-      'rgba(54, 162, 235, 0.7)',
-      'rgba(255, 206, 86, 0.7)',
-      'rgba(75, 192, 192, 0.7)',
-      'rgba(153, 102, 255, 0.7)',
-      'rgba(255, 159, 64, 0.7)',
-      'rgba(199, 199, 199, 0.7)',
-      'rgba(83, 102, 255, 0.7)',
-      'rgba(255, 99, 255, 0.7)',
-      'rgba(99, 255, 132, 0.7)',
+    // Prepare data for each budget category
+    const labels = [];
+    const spentData = [];
+    const backgroundColors = [];
+    const borderColors = [];
+    
+    const baseColors = [
+      { base: 'rgba(54, 162, 235', overBudget: 'rgba(220, 53, 69' },
+      { base: 'rgba(75, 192, 192', overBudget: 'rgba(220, 53, 69' },
+      { base: 'rgba(153, 102, 255', overBudget: 'rgba(220, 53, 69' },
+      { base: 'rgba(255, 159, 64', overBudget: 'rgba(220, 53, 69' },
+      { base: 'rgba(255, 206, 86', overBudget: 'rgba(220, 53, 69' },
+      { base: 'rgba(99, 255, 132', overBudget: 'rgba(220, 53, 69' },
     ];
 
+    budgets.forEach((budget, index) => {
+      const spent = spentByCategory[budget.category] || 0;
+      const budgetAmount = parseFloat(budget.amount);
+      const remaining = Math.max(0, budgetAmount - spent);
+      const isOverBudget = spent > budgetAmount;
+      
+      const colorPair = baseColors[index % baseColors.length];
+      const baseColor = isOverBudget ? colorPair.overBudget : colorPair.base;
+      
+      // Remaining portion (lighter) - add first so it appears on the right
+      if (!isOverBudget && remaining > 0) {
+        labels.push(`${budget.category} (Remaining)`);
+        spentData.push(remaining);
+        backgroundColors.push(`${baseColor}, 0.3)`);
+        borderColors.push(`${baseColor}, 0.5)`);
+      }
+      
+      // Spent portion (darker) - add second so it appears on the left
+      labels.push(`${budget.category} (Spent)`);
+      spentData.push(Math.min(spent, budgetAmount));
+      backgroundColors.push(`${baseColor}, 0.9)`);
+      borderColors.push(`${baseColor}, 1)`);
+    });
+
     return {
-      labels: categories,
+      labels: labels,
       datasets: [
         {
-          label: 'Expenses by Category ($)',
-          data: categories.map(cat => categoryTotals[cat]),
-          backgroundColor: colors.slice(0, categories.length),
-          borderColor: colors.slice(0, categories.length).map(c => c.replace('0.7', '1')),
-          borderWidth: 1,
+          label: 'Budget Status ($)',
+          data: spentData,
+          backgroundColor: backgroundColors,
+          borderColor: borderColors,
+          borderWidth: 2,
+          // Store metadata for tooltip callbacks
+          _spentByCategory: spentByCategory,
+          _budgets: budgets,
         },
       ],
     };
@@ -190,10 +226,16 @@ function Dashboard() {
     plugins: {
       legend: {
         position: 'bottom',
+        labels: {
+          font: {
+            size: 10
+          },
+          padding: 8
+        }
       },
       title: {
         display: true,
-        text: `Expenses by Category Over ${getTimePeriodLabel()}`,
+        text: `Budget Status by Category`,
         font: {
           size: 16,
           weight: 'bold',
@@ -204,7 +246,43 @@ function Dashboard() {
           label: function(context) {
             const label = context.label || '';
             const value = context.parsed || 0;
+            const category = label.replace(' (Spent)', '').replace(' (Remaining)', '');
+            
+            // Access metadata from dataset
+            const spentByCategory = context.dataset._spentByCategory || {};
+            const budgets = context.dataset._budgets || [];
+            
+            // Find the budget for this category to check if over budget
+            const budget = budgets.find(b => b.category === category);
+            if (!budget) return label + ': $' + value.toFixed(2);
+            
+            const spent = spentByCategory[category] || 0;
+            const budgetAmount = parseFloat(budget.amount);
+            const isOverBudget = spent > budgetAmount;
+            
+            // Check if this is a spent segment
+            if (label.includes('(Spent)')) {
+              if (isOverBudget) {
+                const overAmount = spent - budgetAmount;
+                return [
+                  `⚠️ WARNING: Over Budget!`,
+                  `Budget: $${budgetAmount.toFixed(2)}`,
+                  `Spent: $${spent.toFixed(2)}`,
+                  `Over by: $${overAmount.toFixed(2)}`
+                ];
+              } else {
+                return `Spent: $${value.toFixed(2)}`;
+              }
+            } else if (label.includes('(Remaining)')) {
+              return `Remaining: $${value.toFixed(2)}`;
+            }
+            
             return label + ': $' + value.toFixed(2);
+          },
+          title: function(context) {
+            const label = context[0].label || '';
+            const category = label.replace(' (Spent)', '').replace(' (Remaining)', '');
+            return category;
           }
         }
       }
@@ -225,11 +303,11 @@ function Dashboard() {
       <main className="dashboard-main">
         {loading ? (
           <div className="chart-placeholder">
-            <p>Loading your expense data...</p>
+            <p>Loading your data...</p>
           </div>
-        ) : weeklyExpenses.length === 0 ? (
+        ) : budgets.length === 0 ? (
           <div className="chart-placeholder">
-            <p>No expenses recorded for this time period. Start tracking your expenses!</p>
+            <p>No active budgets found. Create a budget to see your spending analysis!</p>
           </div>
         ) : (
           <div className="charts-container">
