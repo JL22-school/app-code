@@ -32,7 +32,6 @@ function Expenses() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
 
     // Make dropdown and new category mutually exclusive
     if (name === "selectedCategory" && value) {
@@ -40,7 +39,7 @@ function Expenses() {
     } else if (name === "newCategory" && value) {
       setFormData(prev => ({ ...prev, newCategory: value, selectedCategory: "" }));
     } else {
-      setFormData({ ...formData, [name]: value });
+      setFormData(prev => ({ ...prev, [name]: value }));
     }
   };
 
@@ -128,7 +127,7 @@ function Expenses() {
           </select>
         </label>
 
-        <label>
+        <label style={{ display: 'flex', flexDirection: 'column' }}>
           Add New Category:
           <input
             type="text"

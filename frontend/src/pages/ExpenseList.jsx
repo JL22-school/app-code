@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import ExportToExcel from '../components/ExportToExcel';
 import './Expenses.css';
 
 export default function ExpenseList() {
@@ -15,6 +16,7 @@ export default function ExpenseList() {
   const [showAddExpensePopup, setShowAddExpensePopup] = useState(false);
   const [formData, setFormData] = useState({
     selectedCategory: "",
+    newCategory: "",
     amount: "",
     date: "",
     notes: "",
@@ -116,15 +118,25 @@ export default function ExpenseList() {
   // Add expense form handlers
   const handleFormChange = (e) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+
+    // Make dropdown and new category mutually exclusive
+    if (name === "selectedCategory" && value) {
+      setFormData(prev => ({ ...prev, selectedCategory: value, newCategory: "" }));
+    } else if (name === "newCategory" && value) {
+      setFormData(prev => ({ ...prev, newCategory: value, selectedCategory: "" }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleAddExpenseSubmit = async (e) => {
     e.preventDefault();
 
-    // Validate that a category is selected
-    if (!formData.selectedCategory) {
-      setMessage("Please select a category.");
+    // Validate that either a category is selected or a new one is entered
+    const finalCategory = formData.selectedCategory || formData.newCategory;
+    
+    if (!finalCategory) {
+      setMessage("Please select a category or enter a new one.");
       return;
     }
 
@@ -136,8 +148,19 @@ export default function ExpenseList() {
         return;
       }
 
+      // If a new category was entered, save it to the database
+      if (formData.newCategory) {
+        await axios.post("http://localhost:5000/api/categories", {
+          clientID: parseInt(userID),
+          categoryName: formData.newCategory
+        });
+        
+        // Refresh categories list
+        fetchCategories();
+      }
+
       const payload = {
-        category: formData.selectedCategory,
+        category: finalCategory,
         amount: formData.amount,
         expenseDate: formData.date,
         notes: formData.notes,
@@ -148,7 +171,7 @@ export default function ExpenseList() {
 
       if (response.status === 200) {
         setMessage("Expense added successfully!");
-        setFormData({ selectedCategory: "", amount: "", date: "", notes: "" });
+        setFormData({ selectedCategory: "", newCategory: "", amount: "", date: "", notes: "" });
         fetchExpenses(); // Refresh the expense list
         setTimeout(() => {
           setShowAddExpensePopup(false);
@@ -163,7 +186,7 @@ export default function ExpenseList() {
 
   const closeAddExpensePopup = () => {
     setShowAddExpensePopup(false);
-    setFormData({ selectedCategory: "", amount: "", date: "", notes: "" });
+    setFormData({ selectedCategory: "", newCategory: "", amount: "", date: "", notes: "" });
     setMessage("");
   };
 
@@ -192,6 +215,9 @@ export default function ExpenseList() {
         >
           Add Expense
         </button>
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
+        <ExportToExcel data={expenses} fileName="expenses.xlsx" />
       </div>
       <div className="expense-list">
         {expenses
@@ -338,7 +364,7 @@ export default function ExpenseList() {
             borderRadius: '8px',
             maxWidth: '500px',
             width: '90%',
-            maxHeight: '80vh',
+            maxHeight: '90vh',
             overflowY: 'auto'
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
@@ -364,7 +390,6 @@ export default function ExpenseList() {
                   name="selectedCategory"
                   value={formData.selectedCategory}
                   onChange={handleFormChange}
-                  required
                   style={{
                     marginTop: "6px",
                     padding: "10px",
@@ -381,6 +406,25 @@ export default function ExpenseList() {
                     </option>
                   ))}
                 </select>
+              </label>
+
+              <label>
+                Add New Category:
+                <input
+                  type="text"
+                  name="newCategory"
+                  value={formData.newCategory || ""}
+                  onChange={handleFormChange}
+                  placeholder="Or enter a new category"
+                  style={{
+                    marginTop: "6px",
+                    padding: "10px",
+                    border: "1px solid #ccc",
+                    borderRadius: "6px",
+                    fontSize: "1rem",
+                    width: "100%"
+                  }}
+                />
               </label>
 
               <label>
