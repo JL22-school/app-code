@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import ExportToExcel from '../components/ExportToExcel';
 import './Expenses.css';  // We can reuse the CSS for now
 
 export default function BudgetList() {
@@ -230,6 +231,14 @@ export default function BudgetList() {
         >
           Create New Budget
         </button>
+      </div>
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        marginBottom: '20px',
+        marginTop: '10px'
+      }}>
+        <ExportToExcel data={budgets} fileName="budgets.xlsx" sheetName="Budgets" />
       </div>
       <div style={{ 
         display: 'flex', 
