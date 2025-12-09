@@ -18,10 +18,16 @@ function LoginPage() {
       if (response.data.user) {
         localStorage.setItem("userID", response.data.user.userID);
         localStorage.setItem("userEmail", response.data.user.email);
+        localStorage.setItem("userFirstName", response.data.user.firstName);
         localStorage.setItem("userName", `${response.data.user.firstName} ${response.data.user.lastName}`);
+        localStorage.setItem("userRole", response.data.user.role);
       }
-      // Redirect to dashboard
-      navigate("/dashboard");
+      // Redirect based on role
+      if (response.data.user.role === "admin") {
+        navigate("/admin");
+      } else {
+        navigate("/dashboard");
+      }
     } catch (error) {
       setMessage(error.response?.data?.error || "Login failed");
     }

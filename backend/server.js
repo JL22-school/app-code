@@ -1,9 +1,9 @@
 const express = require("express");
-const cors = require("cors");
+const cors = require('cors');
 const db = require("./db"); // <-- import database
 const bcrypt = require("bcrypt");
 const app = express();
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors());
@@ -406,6 +406,63 @@ app.post("/api/login", (req, res) => {
           role: user.role,
         },
       });
+    });
+  });
+});
+
+// Delete a user (admin only)
+app.delete("/api/users/:id", (req, res) => {
+  const { id } = req.params;
+
+  // First check if user exists
+  const checkQuery = "SELECT * FROM Users WHERE userID = ?";
+  db.get(checkQuery, [id], (err, user) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Delete the user
+    const deleteQuery = "DELETE FROM Users WHERE userID = ?";
+    db.run(deleteQuery, [id], function (err) {
+      if (err) {
+        return res.status(500).json({ error: err.message });
+      }
+      res.json({ message: "User deleted successfully" });
+    });
+  });
+});
+
+// Reset user password (admin only)
+app.put("/api/users/:id/reset-password", (req, res) => {
+  const { id } = req.params;
+  const { newPassword } = req.body;
+
+  if (!newPassword) {
+    return res.status(400).json({ error: "New password is required" });
+  }
+
+  // Hash the new password
+  bcrypt.hash(newPassword, 10, (hashErr, hashedPassword) => {
+    if (hashErr) {
+      return res.status(500).json({ error: hashErr.message });
+    }
+
+    // Update the password
+    const updateQuery = "UPDATE Users SET password = ? WHERE userID = ?";
+    db.run(updateQuery, [hashedPassword, id], function (err) {
+      if (err) {
+        return res.status(500).json({ error: err.message });
+      }
+
+      if (this.changes === 0) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      res.json({ message: "Password reset successfully" });
     });
   });
 });

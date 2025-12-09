@@ -30,9 +30,14 @@ function Dashboard() {
   const [budgets, setBudgets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [timePeriod, setTimePeriod] = useState('week');
+  const [firstName, setFirstName] = useState('');
 
   useEffect(() => {
     const userID = localStorage.getItem("userID");
+    const storedFirstName = localStorage.getItem("userFirstName");
+    if (storedFirstName) {
+      setFirstName(storedFirstName);
+    }
     if (userID) {
       console.log(`Fetching expenses for timePeriod: ${timePeriod}`);
       setLoading(true);
@@ -119,8 +124,58 @@ function Dashboard() {
     };
   };
 
+  // Process data for pie chart (Expenses by Category)
+  const getExpensesPieChartData = () => {
+    if (weeklyExpenses.length === 0) return { labels: [], datasets: [] };
+
+    // Calculate total spent per category
+    const spentByCategory = {};
+    weeklyExpenses.forEach(expense => {
+      const category = expense.category;
+      spentByCategory[category] = (spentByCategory[category] || 0) + parseFloat(expense.amount);
+    });
+
+    const labels = Object.keys(spentByCategory);
+    const data = Object.values(spentByCategory);
+    
+    const backgroundColors = [
+      'rgba(54, 162, 235, 0.8)',
+      'rgba(75, 192, 192, 0.8)',
+      'rgba(153, 102, 255, 0.8)',
+      'rgba(255, 159, 64, 0.8)',
+      'rgba(255, 206, 86, 0.8)',
+      'rgba(99, 255, 132, 0.8)',
+      'rgba(255, 99, 132, 0.8)',
+      'rgba(201, 203, 207, 0.8)',
+    ];
+
+    const borderColors = [
+      'rgba(54, 162, 235, 1)',
+      'rgba(75, 192, 192, 1)',
+      'rgba(153, 102, 255, 1)',
+      'rgba(255, 159, 64, 1)',
+      'rgba(255, 206, 86, 1)',
+      'rgba(99, 255, 132, 1)',
+      'rgba(255, 99, 132, 1)',
+      'rgba(201, 203, 207, 1)',
+    ];
+
+    return {
+      labels: labels,
+      datasets: [
+        {
+          label: 'Expenses by Category ($)',
+          data: data,
+          backgroundColor: backgroundColors.slice(0, labels.length),
+          borderColor: borderColors.slice(0, labels.length),
+          borderWidth: 2,
+        },
+      ],
+    };
+  };
+
   // Process data for pie chart (Budget Categories with Spent/Remaining)
-  const getPieChartData = () => {
+  const getBudgetsPieChartData = () => {
     if (budgets.length === 0) return { labels: [], datasets: [] };
 
     // Calculate spent amount per category
@@ -289,6 +344,39 @@ function Dashboard() {
     },
   };
 
+  const expensesPieOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'bottom',
+        labels: {
+          font: {
+            size: 10
+          },
+          padding: 8
+        }
+      },
+      title: {
+        display: true,
+        text: `Expenses by Category Over ${getTimePeriodLabel()}`,
+        font: {
+          size: 16,
+          weight: 'bold',
+        },
+      },
+      tooltip: {
+        callbacks: {
+          label: function(context) {
+            const label = context.label || '';
+            const value = context.parsed || 0;
+            return label + ': $' + value.toFixed(2);
+          },
+        }
+      }
+    },
+  };
+
   return (
     <div className="dashboard-container">
       {/* Header */}
@@ -298,6 +386,21 @@ function Dashboard() {
           Logout
         </button>
       </header>
+
+      {/* Welcome message */}
+      {firstName && (
+        <div style={{
+          padding: '15px 20px',
+          backgroundColor: '#e0f2fe',
+          borderBottom: '1px solid #0284c7',
+          textAlign: 'center',
+          fontSize: '1.1rem',
+          color: '#0c4a6e',
+          fontWeight: '500'
+        }}>
+          Welcome, {firstName}!
+        </div>
+      )}
 
       {/* Main content area */}
       <main className="dashboard-main">
@@ -315,7 +418,10 @@ function Dashboard() {
               <Bar key={`bar-${timePeriod}`} data={getBarChartData()} options={barOptions} />
             </div>
             <div className="chart-box">
-              <Pie key={`pie-${timePeriod}`} data={getPieChartData()} options={pieOptions} />
+              <Pie key={`expenses-pie-${timePeriod}`} data={getExpensesPieChartData()} options={expensesPieOptions} />
+            </div>
+            <div className="chart-box">
+              <Pie key={`budgets-pie-${timePeriod}`} data={getBudgetsPieChartData()} options={pieOptions} />
             </div>
           </div>
         )}
